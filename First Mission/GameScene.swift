@@ -8,13 +8,21 @@
 import SpriteKit
 import GameplayKit
 
-class GameScene: SKScene {
+class GameScene: SKScene, SKPhysicsContactDelegate {
     
     
     let player = SKSpriteNode(imageNamed: "playerShip")
     
     var gameArea: CGRect
     
+    
+    struct PhysiscsCategories{
+        static let Nome: UInt32 = 0
+        static let Player: UInt32 = 0b1 //1
+        static let Bullet: UInt32 = 0b10 //2
+        static let Emeny : UInt32 = 0b100 //4
+        
+    }
     
     func random() -> CGFloat{
         return CGFloat(Float(arc4random()) / 0xFFFFFFFF)
@@ -43,6 +51,11 @@ class GameScene: SKScene {
     
     // Mark move player add background
     override func didMove(to view: SKView) {
+        
+        self.physicsWorld.contactDelegate = self
+        
+        
+        
         let background  = SKSpriteNode(imageNamed: "background")
         background.size = self.size
         background.position = CGPoint(x: self.size.width/2, y: self.size.height/2)
@@ -55,12 +68,93 @@ class GameScene: SKScene {
         player.setScale(1)
         player.position = CGPoint(x: self.size.width/2, y: self.size.height * 0.2)
         player.zPosition = 2
+        player.physicsBody = SKPhysicsBody(rectangleOf: player.size)
+        player.physicsBody!.affectedByGravity = false
+        player.physicsBody!.categoryBitMask = PhysiscsCategories.Player
+        player.physicsBody!.collisionBitMask = PhysiscsCategories.Nome
+        player.physicsBody!.contactTestBitMask = PhysiscsCategories.Emeny
         self.addChild(player)
+        
+        
+        startNewlevel()
+        
     }
     
     
-    //Mark start new Level
     
+    func didBegin(_ contact: SKPhysicsContact) {
+                var body1 = SKPhysicsBody()
+                var body2 = SKPhysicsBody()
+        
+                if contact.bodyA.categoryBitMask < contact.bodyB.categoryBitMask{
+                    body1 = contact.bodyA
+                    body2 = contact.bodyB
+                }else{
+                    body1 = contact.bodyB
+                    body2 = contact.bodyA
+                }
+        
+                if body1.categoryBitMask == PhysiscsCategories.Player && body2.categoryBitMask == PhysiscsCategories.Emeny{
+                    //if player has hit the enemy
+        
+                    body1.node?.removeFromParent()
+                    body2.node?.removeFromParent()
+                }
+                if body1.categoryBitMask == PhysiscsCategories.Bullet && body2.categoryBitMask == PhysiscsCategories.Emeny{
+                    //if bullet has hit the enemy
+                    body1.node?.removeFromParent()
+                    body2.node?.removeFromParent()
+        
+        
+                }
+        
+    }
+    
+    
+//    func didBeginContatct(contact: SKPhysicsContact){
+//
+//        var body1 = SKPhysicsBody()
+//        var body2 = SKPhysicsBody()
+//
+//        if contact.bodyA.categoryBitMask < contact.bodyB.categoryBitMask{
+//            body1 = contact.bodyA
+//            body2 = contact.bodyB
+//        }else{
+//            body1 = contact.bodyB
+//            body2 = contact.bodyA
+//        }
+//
+//        if body1.categoryBitMask == PhysiscsCategories.Player && body2.categoryBitMask == PhysiscsCategories.Emeny{
+//            //if player has hit the enemy
+//
+//            body1.node?.removeFromParent()
+//            body2.node?.removeFromParent()
+//        }
+//        if body1.categoryBitMask == PhysiscsCategories.Bullet && body2.categoryBitMask == PhysiscsCategories.Emeny{
+//            //if bullet has hit the enemy
+//            body1.node?.removeFromParent()
+//            body2.node?.removeFromParent()
+//
+//
+//        }
+//
+//
+//    }
+    
+    
+    
+    //Mark start new Level
+    func startNewlevel(){
+        let spawn = SKAction.run(spawnEnemy)
+        let waitToSpawn = SKAction.wait(forDuration: 1)
+        let spawnSequence = SKAction.sequence([spawn, waitToSpawn])
+        let spawnForever = SKAction.repeatForever(spawnSequence)
+        self.run(spawnForever)
+        
+        
+        
+        
+    }
     
     
     
@@ -73,6 +167,11 @@ class GameScene: SKScene {
         bullet.setScale(1)
         bullet.position = player.position
         bullet.zPosition = 1
+        bullet.physicsBody = SKPhysicsBody(rectangleOf: bullet.size)
+        bullet.physicsBody!.affectedByGravity = false
+        bullet.physicsBody!.categoryBitMask = PhysiscsCategories.Bullet
+        bullet.physicsBody!.collisionBitMask = PhysiscsCategories.Nome
+        bullet.physicsBody!.contactTestBitMask = PhysiscsCategories.Emeny
         self.addChild(bullet)
         
         let bulletSound = SKAction.playSoundFileNamed("laser.wav", waitForCompletion: false)
@@ -88,7 +187,7 @@ class GameScene: SKScene {
     
     func spawnEnemy(){
         
-        let randomXStart = random(min: CGRectGetMinX(gameArea), max: CGRectGetMinX(gameArea) )
+        let randomXStart = random(min: CGRectGetMinX(gameArea), max: CGRectGetMaxX(gameArea) )
         let randomXEnd = random(min: CGRectGetMinX(gameArea), max: CGRectGetMaxX(gameArea) )
         
         let  startPoint = CGPoint(x: randomXStart, y: self.size.height * 1.3)
@@ -98,6 +197,11 @@ class GameScene: SKScene {
         enemy.setScale(1)
         enemy.position = startPoint
         enemy.zPosition = 2
+        enemy.physicsBody = SKPhysicsBody(rectangleOf: enemy.size)
+        enemy.physicsBody!.affectedByGravity = false
+        enemy.physicsBody!.categoryBitMask = PhysiscsCategories.Emeny
+        enemy.physicsBody!.collisionBitMask = PhysiscsCategories.Nome
+        enemy.physicsBody!.contactTestBitMask = PhysiscsCategories.Player | PhysiscsCategories.Bullet
         self.addChild(enemy)
         
         let moveEnenmy = SKAction.move(to: endPoint, duration: 1.5)
@@ -116,7 +220,8 @@ class GameScene: SKScene {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         fireBullet()
-        spawnEnemy()
+        
+        
     }
     
     //Mark get Touches
