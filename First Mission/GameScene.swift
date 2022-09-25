@@ -12,6 +12,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     
     let player = SKSpriteNode(imageNamed: "playerShip")
+    let explosionSound = SKAction.playSoundFileNamed("explosionSound.mp3", waitForCompletion: false)
     
     var gameArea: CGRect
     
@@ -96,12 +97,31 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
                 if body1.categoryBitMask == PhysiscsCategories.Player && body2.categoryBitMask == PhysiscsCategories.Emeny{
                     //if player has hit the enemy
+                    
+                    if body1.node != nil{
+                        spawnExplosion(spawnPosition: body1.node!.position)
+                    }
+                   
+                    
+                    if body2.node != nil{
+                        spawnExplosion(spawnPosition: body2.node!.position)
+                    }
+                    
         
                     body1.node?.removeFromParent()
                     body2.node?.removeFromParent()
+                    
+                    
                 }
-                if body1.categoryBitMask == PhysiscsCategories.Bullet && body2.categoryBitMask == PhysiscsCategories.Emeny{
+        if body1.categoryBitMask == PhysiscsCategories.Bullet && body2.categoryBitMask == PhysiscsCategories.Emeny && (body2.node?.position.y)! < self.size.height{
                     //if bullet has hit the enemy
+            
+            
+           
+            if body2.node != nil{
+                spawnExplosion(spawnPosition: body2.node!.position)
+            }
+            
                     body1.node?.removeFromParent()
                     body2.node?.removeFromParent()
         
@@ -111,35 +131,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     
-//    func didBeginContatct(contact: SKPhysicsContact){
-//
-//        var body1 = SKPhysicsBody()
-//        var body2 = SKPhysicsBody()
-//
-//        if contact.bodyA.categoryBitMask < contact.bodyB.categoryBitMask{
-//            body1 = contact.bodyA
-//            body2 = contact.bodyB
-//        }else{
-//            body1 = contact.bodyB
-//            body2 = contact.bodyA
-//        }
-//
-//        if body1.categoryBitMask == PhysiscsCategories.Player && body2.categoryBitMask == PhysiscsCategories.Emeny{
-//            //if player has hit the enemy
-//
-//            body1.node?.removeFromParent()
-//            body2.node?.removeFromParent()
-//        }
-//        if body1.categoryBitMask == PhysiscsCategories.Bullet && body2.categoryBitMask == PhysiscsCategories.Emeny{
-//            //if bullet has hit the enemy
-//            body1.node?.removeFromParent()
-//            body2.node?.removeFromParent()
-//
-//
-//        }
-//
-//
-//    }
+    func spawnExplosion(spawnPosition: CGPoint){
+        
+        let explosion = SKSpriteNode(imageNamed: "explosion")
+        explosion.position = spawnPosition
+        explosion.zPosition = 3
+        explosion.setScale(0)
+        self.addChild(explosion)
+        
+        let scaleIn = SKAction.scale(to: 1, duration: 0.1)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.1)
+        let delete = SKAction.removeFromParent()
+        let explosioSeguence = SKAction.sequence([explosionSound, scaleIn,fadeOut, delete])
+        
+        explosion.run(explosioSeguence)
+        
+        
+        
+    }
     
     
     
