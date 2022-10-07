@@ -10,28 +10,63 @@ import GameplayKit
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
-    
+    var gameScore = 0
+    var  scoreLabel = SKLabelNode(fontNamed: "THEBOLDFONT")
+    var  gameOverLabel = SKLabelNode(fontNamed: "THEBOLDFONT")
+    var levelGame = 0
+    var enemyPosition: CGPoint = CGPoint(x: 0, y:  1.3)
+    var lifesNumber = 3
+    let lifesLabel = SKLabelNode(fontNamed:"THEBOLDFONT")
     let player = SKSpriteNode(imageNamed: "playerShip")
+    var levelDuration = TimeInterval()
+    //let enemy = SKSpriteNode(imageNamed: "enemyShip")
     let explosionSound = SKAction.playSoundFileNamed("explosionSound.mp3", waitForCompletion: false)
-    
+    let SoundSpace = SKAction.playSoundFileNamed("soundSpace.mp3", waitForCompletion: false)
     var gameArea: CGRect
+    var meteorFrames = [SKTexture]()
+    var background  = SKSpriteNode(imageNamed: "background")
+    let predios2 = SKSpriteNode(imageNamed: "predios2")
+    let predios1 = SKSpriteNode(imageNamed: "predios1")
+    let predios3 = SKSpriteNode(imageNamed: "predios3")
     
     
     struct PhysiscsCategories{
         static let Nome: UInt32 = 0
+        static let Predios1: UInt32 = 0b1
+        static let Predios2: UInt32 = 0b1
+        static let Predios3: UInt32 = 0b1
         static let Player: UInt32 = 0b1 //1
         static let Bullet: UInt32 = 0b10 //2
+        static let BulletEnemy: UInt32 = 0b100 //4
         static let Emeny : UInt32 = 0b100 //4
+        static let Meteor : UInt32 = 0b100//4
+        static let NaveEstrelar : UInt32 = 0b100//4
         
     }
+    
+    
+    
+  
+    
+    
     
     func random() -> CGFloat{
         return CGFloat(Float(arc4random()) / 0xFFFFFFFF)
     }
     
+    
+    
+    
+    
+    
+    
     func random( min min: CGFloat, max: CGFloat) -> CGFloat{
         return random() * (max - min) + min
     }
+    
+    
+    
+    
     
     
     override init(size: CGSize) {
@@ -44,9 +79,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         super.init(size: size)
     }
     
+    
+    
+    
+    
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder) has not been implemented")
     }
+    
+    
     
     
     
@@ -54,15 +96,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     override func didMove(to view: SKView) {
         
         self.physicsWorld.contactDelegate = self
-        
-        
-        
-        let background  = SKSpriteNode(imageNamed: "background")
         background.size = self.size
         background.position = CGPoint(x: self.size.width/2, y: self.size.height/2)
         background.zPosition = 0
         self.addChild(background)
-        
+//        moveBackground()
         
         //Adicionando o player
         
@@ -77,11 +115,163 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.addChild(player)
         
         
+        //Configuração dos prédios
+        predios2.setScale(1)
+        predios2.position = CGPoint(x: self.size.width / 2 , y: self.size.height * 0.1)
+        predios2.zPosition = 2
+        predios2.physicsBody = SKPhysicsBody(rectangleOf: (predios2.size))
+        predios2.physicsBody!.affectedByGravity = false
+        predios2.physicsBody!.categoryBitMask = PhysiscsCategories.Predios2
+        predios2.physicsBody!.collisionBitMask = PhysiscsCategories.Nome
+        //predios.physicsBody!.contactTestBitMask = PhysiscsCategories.Emeny
+        self.addChild(predios2)
+        
+        predios1.setScale(1)
+        predios1.position = CGPoint(x: self.size.width / 4 , y: self.size.height * 0.1)
+        predios1.zPosition = 2
+        predios1.physicsBody = SKPhysicsBody(rectangleOf: (predios1.size))
+        predios1.physicsBody!.affectedByGravity = false
+        predios1.physicsBody!.categoryBitMask = PhysiscsCategories.Predios1
+        predios1.physicsBody!.collisionBitMask = PhysiscsCategories.Nome
+        //predios.physicsBody!.contactTestBitMask = PhysiscsCategories.Emeny
+        self.addChild(predios1)
+        
+        
+        predios3.setScale(1)
+        predios3.position = CGPoint(x: self.size.width * 0.75 , y: self.size.height * 0.1)
+        predios3.zPosition = 2
+        predios3.physicsBody = SKPhysicsBody(rectangleOf: (predios3.size))
+        predios3.physicsBody!.affectedByGravity = false
+        predios3.physicsBody!.categoryBitMask = PhysiscsCategories.Predios3
+        predios3.physicsBody!.collisionBitMask = PhysiscsCategories.Nome
+        //predios.physicsBody!.contactTestBitMask = PhysiscsCategories.Emeny
+        self.addChild(predios3)
+        
+        
+        
+        gameOverLabel.text = "Game Over"
+        gameOverLabel.fontSize = 120
+        gameOverLabel.fontColor = SKColor.white
+        gameOverLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
+        gameOverLabel.position = CGPoint(x: self.size.width , y: self.size.height / 2)
+        gameOverLabel.zPosition = 100
+        self.addChild(gameOverLabel)
+        
+        scoreLabel.text = "Score: 0"
+        scoreLabel.fontSize = 70
+        scoreLabel.fontColor = SKColor.white
+        scoreLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
+        scoreLabel.position = CGPoint(x: self.size.width*0.22, y: self.size.height*0.9)
+        scoreLabel.zPosition = 100
+        self.addChild(scoreLabel)
+        
+        
+        lifesLabel.text = "Lives: 3"
+        lifesLabel.fontSize = 70
+        lifesLabel.fontColor = SKColor.white
+        lifesLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.right
+        lifesLabel.position = CGPoint(x: self.size.width*0.78, y: self.size.height*0.9)
+        lifesLabel.zPosition = 100
+        self.addChild(lifesLabel)
+        
+        
+        
         startNewlevel()
         
     }
     
     
+    //Mark start new Level
+    func startNewlevel(){
+        
+        levelGame += 1
+        
+        if self.action(forKey: "spawningEnemies") != nil{
+            self.removeAction(forKey: "spawningEnemies")
+        }
+        
+        var levelDuration = TimeInterval()
+        
+        
+        
+        
+        switch levelGame {
+        case 1: levelDuration = 1.2
+        case 2: levelDuration = 1
+        case 3: levelDuration = 0.8
+        case 4: levelDuration = 0.5
+        default:
+            levelDuration = 0.5
+            print("Cannot find level info")
+        }
+        
+        
+        let spawn = SKAction.run(spawnEnemy)
+        let meteor = SKAction.run(meteorObject)
+        let waitToSpawn = SKAction.wait(forDuration: levelDuration)
+        var spawnSequence = SKAction.sequence([SoundSpace,waitToSpawn, spawn])
+        var spawnForever = SKAction.repeatForever(spawnSequence)
+        self.run(spawnForever, withKey: "spawningEnemies")
+        
+    
+    }
+    
+    
+    func loseALife(){
+        print(lifesNumber)
+        lifesNumber -=   1
+        lifesLabel.text = "Lives: \(lifesNumber)"
+        
+        
+        let scaleUp = SKAction.scale(to: 1.5, duration: 0.2)
+        let scaleDown = SKAction.scale(to: 1, duration: 0.2)
+        let scaleSeguence = SKAction.sequence([scaleUp, scaleDown])
+        lifesLabel.run(scaleSeguence)
+        
+        if lifesNumber == 0{
+            runGameOver()
+        }
+        
+        
+    }
+    
+    
+    
+    //Finish Game
+    func runGameOver(){
+        self.removeAllActions()
+        gameOverLabel.position = CGPoint(x: self.size.width * 0.30, y: self.size.height / 2)
+    }
+    
+    
+   //Pontuação @@@@@@@@@@@@@@@@@@
+    
+    func addScore(){
+        gameScore += 1
+        scoreLabel.text = "Score: \(gameScore)"
+        
+        if gameScore >= 5 {
+            
+            fireBulletEnemy(spawnPosition: position)
+
+        }
+        
+        if gameScore >= 25 {
+            fireBulletEnemy(spawnPosition: position)
+        }
+        
+        
+        if gameScore >= 10 && gameScore <= 25 {
+            meteorObject()
+        }
+        if gameScore >= 25 && gameScore <= 45 {
+            spawnNaveEstrela()
+        }
+
+    }
+    
+    
+
     
     func didBegin(_ contact: SKPhysicsContact) {
                 var body1 = SKPhysicsBody()
@@ -99,27 +289,25 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                     //if player has hit the enemy
                     
                     if body1.node != nil{
-                        spawnExplosion(spawnPosition: body1.node!.position)
+                        spawnExplosion(spawnPosition: body1.node!.position, how: "player")
                     }
                    
                     
-                    if body2.node != nil{
-                        spawnExplosion(spawnPosition: body2.node!.position)
-                    }
-                    
-        
+                
                     body1.node?.removeFromParent()
                     body2.node?.removeFromParent()
                     
                     
                 }
         if body1.categoryBitMask == PhysiscsCategories.Bullet && body2.categoryBitMask == PhysiscsCategories.Emeny && (body2.node?.position.y)! < self.size.height{
+            
+            
                     //if bullet has hit the enemy
             
+            addScore()
             
-           
             if body2.node != nil{
-                spawnExplosion(spawnPosition: body2.node!.position)
+                spawnExplosion(spawnPosition: body2.node!.position,how: "enemy" )
             }
             
                     body1.node?.removeFromParent()
@@ -131,7 +319,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     
-    func spawnExplosion(spawnPosition: CGPoint){
+    
+    
+    
+    func spawnExplosion(spawnPosition: CGPoint, how: String){
         
         let explosion = SKSpriteNode(imageNamed: "explosion")
         explosion.position = spawnPosition
@@ -142,31 +333,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let scaleIn = SKAction.scale(to: 1, duration: 0.1)
         let fadeOut = SKAction.fadeOut(withDuration: 0.1)
         let delete = SKAction.removeFromParent()
-        let explosioSeguence = SKAction.sequence([explosionSound, scaleIn,fadeOut, delete])
+        let loseALifeAction = SKAction.run(loseALife)
         
-        explosion.run(explosioSeguence)
-        
-        
-        
-    }
-    
-    
-    
-    //Mark start new Level
-    func startNewlevel(){
-        let spawn = SKAction.run(spawnEnemy)
-        let waitToSpawn = SKAction.wait(forDuration: 1)
-        let spawnSequence = SKAction.sequence([spawn, waitToSpawn])
-        let spawnForever = SKAction.repeatForever(spawnSequence)
-        self.run(spawnForever)
-        
-        
-        
+        if how == "player"{
+            let explosioSeguence = SKAction.sequence([explosionSound, scaleIn,fadeOut, delete,loseALifeAction])
+            explosion.run(explosioSeguence)
+        }
+        else{
+            let explosioSeguence = SKAction.sequence([explosionSound, scaleIn,fadeOut, delete])
+            explosion.run(explosioSeguence)
+        }
+       
         
     }
-    
-    
-    
     
     
 // Mark add fire Gun
@@ -191,6 +370,31 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     }
     
+    //Missel do Inimigo
+    func fireBulletEnemy(spawnPosition: CGPoint){
+        let bullet = SKSpriteNode(imageNamed: "misselEnemy1")
+        bullet.setScale(1)
+        bullet.position = spawnPosition
+        bullet.zPosition = 2
+        bullet.physicsBody = SKPhysicsBody(rectangleOf: bullet.size)
+        bullet.physicsBody!.affectedByGravity = false
+        bullet.physicsBody!.categoryBitMask = PhysiscsCategories.BulletEnemy
+        bullet.physicsBody!.collisionBitMask = PhysiscsCategories.Nome
+        bullet.physicsBody!.contactTestBitMask = PhysiscsCategories.Player
+        self.addChild(bullet)
+
+        let bulletSound = SKAction.playSoundFileNamed("laser.wav", waitForCompletion: false)
+        let moveBullet = SKAction.moveTo(y: self.size.height + bullet.size.height, duration: 1)
+        let deleteBullet = SKAction.removeFromParent()
+        let bulletSequence = SKAction.sequence([bulletSound,moveBullet, deleteBullet])
+        bullet.run(bulletSequence)
+
+    }
+
+    
+    
+    
+    
     
     //Mark Add inemy
     
@@ -200,9 +404,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let randomXEnd = random(min: CGRectGetMinX(gameArea), max: CGRectGetMaxX(gameArea) )
         
         let  startPoint = CGPoint(x: randomXStart, y: self.size.height * 1.3)
-        let  endPoint = CGPoint(x: randomXEnd, y: self.size.height * 0.2)
+        let  endPoint = CGPoint(x: randomXEnd, y: self.size.height * 0.0)
         
         let enemy = SKSpriteNode(imageNamed: "enemyShip")
+        position = startPoint
         enemy.setScale(1)
         enemy.position = startPoint
         enemy.zPosition = 2
@@ -213,8 +418,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         enemy.physicsBody!.contactTestBitMask = PhysiscsCategories.Player | PhysiscsCategories.Bullet
         self.addChild(enemy)
         
-        let moveEnenmy = SKAction.move(to: endPoint, duration: 1.5)
+        let moveEnenmy = SKAction.move(to: endPoint, duration: 2.3)
         let deleteEnemy = SKAction.removeFromParent()
+        let loseALifeAction = SKAction.run(loseALife)
         let enenySeguence = SKAction.sequence([moveEnenmy, deleteEnemy])
         enemy.run(enenySeguence)
         
@@ -227,11 +433,119 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        fireBullet()
+    func spawnNaveEstrela(){
+        
+        let randomXStart = random(min: CGRectGetMinX(gameArea), max: CGRectGetMaxX(gameArea) )
+        let randomXEnd = random(min: CGRectGetMinX(gameArea), max: CGRectGetMaxX(gameArea) )
+        let naveEstrelar = SKSpriteNode(imageNamed: "nave_estrelar")
+        let  startPoint = CGPoint(x: randomXStart, y: self.size.height * 1.5)
+        let  endPoint = CGPoint(x: randomXEnd, y: self.size.height * 0.0)
+        
+      
+        naveEstrelar.setScale(1)
+        naveEstrelar.position = startPoint
+        naveEstrelar.zPosition = 2
+        naveEstrelar.physicsBody = SKPhysicsBody(rectangleOf: naveEstrelar.size)
+        naveEstrelar.physicsBody!.affectedByGravity = false
+        naveEstrelar.physicsBody!.categoryBitMask = PhysiscsCategories.NaveEstrelar
+        naveEstrelar.physicsBody!.collisionBitMask = PhysiscsCategories.Nome
+        naveEstrelar.physicsBody!.contactTestBitMask = PhysiscsCategories.Player | PhysiscsCategories.Bullet
+        self.addChild(naveEstrelar)
+        
+        let moveEnenmy = SKAction.move(to: endPoint, duration: 2.8)
+        let deleteEnemy = SKAction.removeFromParent()
+        let loseALifeAction = SKAction.run(loseALife)
+        let enenySeguence = SKAction.sequence([moveEnenmy, deleteEnemy, loseALifeAction])
+        naveEstrelar.run(enenySeguence)
+        
+        let dx = endPoint.x - startPoint.x
+        let dy = endPoint.y - startPoint.y
+        let amountToRoutate = atan2(dy, dx)
+        naveEstrelar.zRotation = amountToRoutate
         
         
     }
+    
+    
+    
+    
+    
+    func meteorObject(){
+        
+        let randomXStart = random(min: CGRectGetMinX(gameArea), max: CGRectGetMaxX(gameArea) )
+        let randomXEnd = random(min: CGRectGetMinX(gameArea), max: CGRectGetMaxX(gameArea) )
+        
+        let  startPoint = CGPoint(x: randomXStart, y: self.size.height * 1.3)
+        let  endPoint = CGPoint(x: randomXEnd, y: self.size.height * 0.0)
+        
+        
+        let meteorSpriteNode = SKSpriteNode(imageNamed: "tile000")
+        var meteorFrames = [SKTexture]()
+        
+        
+        let textureAtlasMeteor =  SKTextureAtlas(named: "Meteor Frames")
+        
+        
+        
+        meteorSpriteNode.setScale(1)
+        meteorSpriteNode.position = startPoint
+        meteorSpriteNode.zPosition = 2
+        meteorSpriteNode.physicsBody = SKPhysicsBody(rectangleOf: meteorSpriteNode.size)
+        meteorSpriteNode.physicsBody!.affectedByGravity = false
+        meteorSpriteNode.physicsBody!.categoryBitMask = PhysiscsCategories.Meteor
+        meteorSpriteNode.physicsBody!.collisionBitMask = PhysiscsCategories.Nome
+        meteorSpriteNode.physicsBody!.contactTestBitMask = PhysiscsCategories.Player | PhysiscsCategories.Bullet
+        self.addChild(meteorSpriteNode)
+        
+        let moveMeteor = SKAction.move(to: endPoint, duration: 3.0)
+        let deleteMeteor = SKAction.removeFromParent()
+        let meteorSeguence = SKAction.sequence([moveMeteor, deleteMeteor])
+        meteorSpriteNode.run(meteorSeguence)
+        
+        let dx = endPoint.x - startPoint.x
+        let dy = endPoint.y - startPoint.y
+        
+        
+        for index in 0..<textureAtlasMeteor.textureNames.count{
+            let textureNamesMet = "tile00" + String(index)
+            meteorFrames.append(textureAtlasMeteor.textureNamed(textureNamesMet))
+        }
+        
+        
+        let amountToRoutate = atan2(dy, dx)
+        meteorSpriteNode.zRotation = amountToRoutate
+        
+        meteorSpriteNode.run(SKAction.repeatForever(SKAction.animate(with: meteorFrames, timePerFrame: 0.1)))
+        
+        
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
+        if (lifesNumber != 0){
+            fireBullet()
+        }
+        
+        
+        
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     //Mark get Touches
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
