@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		3E1EF5A028D65B2900EBAAAF /* laser.wav in Resources */ = {isa = PBXBuildFile; fileRef = 3E1EF59F28D65B2800EBAAAF /* laser.wav */; };
 		3E1EF5A228D65B6D00EBAAAF /* explosionSound.wav in Resources */ = {isa = PBXBuildFile; fileRef = 3E1EF5A128D65B6D00EBAAAF /* explosionSound.wav */; };
+		3E2CE57928F52A5B001D6C3D /* GameOverScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E2CE57828F52A5B001D6C3D /* GameOverScene.swift */; };
 		3E7CBB6628E0005B00BECC56 /* explosionSound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 3E7CBB6528E0005B00BECC56 /* explosionSound.mp3 */; };
 		3E8B9A0B28D4F61600FBD1B4 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E8B9A0A28D4F61600FBD1B4 /* AppDelegate.swift */; };
 		3E8B9A0D28D4F61600FBD1B4 /* GameScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = 3E8B9A0C28D4F61600FBD1B4 /* GameScene.sks */; };
@@ -46,6 +47,7 @@
 /* Begin PBXFileReference section */
 		3E1EF59F28D65B2800EBAAAF /* laser.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = laser.wav; sourceTree = "<group>"; };
 		3E1EF5A128D65B6D00EBAAAF /* explosionSound.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = explosionSound.wav; sourceTree = "<group>"; };
+		3E2CE57828F52A5B001D6C3D /* GameOverScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverScene.swift; sourceTree = "<group>"; };
 		3E7CBB6528E0005B00BECC56 /* explosionSound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = explosionSound.mp3; sourceTree = "<group>"; };
 		3E8B9A0728D4F61500FBD1B4 /* First Mission.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "First Mission.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3E8B9A0A28D4F61600FBD1B4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 				3E8B9A1428D4F61600FBD1B4 /* Main.storyboard */,
 				3E8B9A1728D4F61900FBD1B4 /* Assets.xcassets */,
 				3E8B9A1928D4F61900FBD1B4 /* LaunchScreen.storyboard */,
+				3E2CE57828F52A5B001D6C3D /* GameOverScene.swift */,
 			);
 			path = "First Mission";
 			sourceTree = "<group>";
@@ -292,6 +295,7 @@
 			files = (
 				3E8B9A1128D4F61600FBD1B4 /* GameScene.swift in Sources */,
 				3E8B9A1328D4F61600FBD1B4 /* GameViewController.swift in Sources */,
+				3E2CE57928F52A5B001D6C3D /* GameOverScene.swift in Sources */,
 				3E8B9A0B28D4F61600FBD1B4 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

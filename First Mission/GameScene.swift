@@ -7,16 +7,19 @@
 
 import SpriteKit
 import GameplayKit
+var gameScore = 0
+
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
-    var gameScore = 0
+    
     var  scoreLabel = SKLabelNode(fontNamed: "THEBOLDFONT")
     var  gameOverLabel = SKLabelNode(fontNamed: "THEBOLDFONT")
     var levelGame = 0
     var enemyPosition: CGPoint = CGPoint(x: 0, y:  1.3)
     var lifesNumber = 3
     let lifesLabel = SKLabelNode(fontNamed:"THEBOLDFONT")
+    let tapToStartLabel = SKLabelNode(fontNamed: "THEBOLDFONT")
     let player = SKSpriteNode(imageNamed: "playerShip")
     var levelDuration = TimeInterval()
     //let enemy = SKSpriteNode(imageNamed: "enemyShip")
@@ -43,6 +46,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         static let NaveEstrelar : UInt32 = 0b100//4
         
     }
+    
+    
+    enum gameState{
+        case preGame // antes de começar o jogo
+        case inGame // Durante a partida
+        case afterGame //Depois de finalizado o jogo
+    }
+    
+    
+    var currentGameState = gameState.preGame
     
     
     
@@ -95,6 +108,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     // Mark move player add background
     override func didMove(to view: SKView) {
         
+        gameScore = 0 
+        
         self.physicsWorld.contactDelegate = self
         background.size = self.size
         background.position = CGPoint(x: self.size.width/2, y: self.size.height/2)
@@ -105,7 +120,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         //Adicionando o player
         
         player.setScale(1)
-        player.position = CGPoint(x: self.size.width/2, y: self.size.height * 0.2)
+        player.position = CGPoint(x: self.size.width/2, y: 0 - player.size.height)
         player.zPosition = 2
         player.physicsBody = SKPhysicsBody(rectangleOf: player.size)
         player.physicsBody!.affectedByGravity = false
@@ -161,7 +176,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scoreLabel.fontSize = 70
         scoreLabel.fontColor = SKColor.white
         scoreLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
-        scoreLabel.position = CGPoint(x: self.size.width*0.22, y: self.size.height*0.9)
+        scoreLabel.position = CGPoint(x: self.size.width*0.22, y: self.size.height + scoreLabel.frame.size.height)
         scoreLabel.zPosition = 100
         self.addChild(scoreLabel)
         
@@ -170,13 +185,49 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         lifesLabel.fontSize = 70
         lifesLabel.fontColor = SKColor.white
         lifesLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.right
-        lifesLabel.position = CGPoint(x: self.size.width*0.78, y: self.size.height*0.9)
+        lifesLabel.position = CGPoint(x: self.size.width*0.78, y: self.size.height + lifesLabel.frame.size.height)
         lifesLabel.zPosition = 100
         self.addChild(lifesLabel)
         
         
+        let moveOnToScreenAction = SKAction.moveTo(y: self.size.height * 0.9, duration: 0.3)
+        scoreLabel.run(moveOnToScreenAction)
+        lifesLabel.run(moveOnToScreenAction)
+        
+        
+        tapToStartLabel.text = "Tap To Start"
+        tapToStartLabel.fontSize = 100
+        tapToStartLabel.fontColor = SKColor.white
+        tapToStartLabel.position = CGPoint(x: self.size.width/2, y: self.size.height/2)
+        tapToStartLabel.zPosition = 1
+        self.addChild(tapToStartLabel)
+        
+        
+//        let fadeInAction = SKAction.fadeOut(withDuration: 0.3)
+//        tapToStartLabel.run(fadeInAction)
+//
+        
         
         startNewlevel()
+        
+    }
+    
+    
+    
+    /// MARK TO Start Game
+    func startGame(){
+        
+        currentGameState = gameState.inGame
+        
+        let fadeOutAction = SKAction.fadeOut(withDuration: 0.5)
+        let deleteAction = SKAction.removeFromParent()
+        let deleteSequence = SKAction.sequence([fadeOutAction, deleteAction])
+        tapToStartLabel.run(deleteSequence)
+        
+        let moveShipOnToScreenAction = SKAction.moveTo(y: self.size.height * 0.3, duration: 0.5)
+        let startlevelAction = SKAction.run(startNewlevel)
+        let startGameSeguence = SKAction.sequence([moveShipOnToScreenAction, startlevelAction])
+        player.run(startGameSeguence)
         
     }
     
@@ -211,10 +262,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let waitToSpawn = SKAction.wait(forDuration: levelDuration)
         var spawnSequence = SKAction.sequence([SoundSpace,waitToSpawn, spawn])
         var spawnForever = SKAction.repeatForever(spawnSequence)
-        self.run(spawnForever, withKey: "spawningEnemies")
         
+        if currentGameState == gameState.inGame{
+            self.run(spawnForever, withKey: "spawningEnemies")
+        }
     
     }
+    
+    
     
     
     func loseALife(){
@@ -239,8 +294,51 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     //Finish Game
     func runGameOver(){
+        
+        currentGameState = gameState.afterGame
+        
         self.removeAllActions()
         gameOverLabel.position = CGPoint(x: self.size.width * 0.30, y: self.size.height / 2)
+        
+        self.enumerateChildNodes(withName: "Bullet" ){
+            bullet, stop in
+            bullet.removeAllActions()
+        }
+        
+        self.enumerateChildNodes(withName: "MisselEnemy1" ){
+            missel, stop in
+            missel.removeAllActions()
+        }
+        self.enumerateChildNodes(withName: "Enemy" ){
+            enemy, stop in
+            enemy.removeAllActions()
+        }
+        self.enumerateChildNodes(withName: "Meteor" ){
+            meteor, stop in
+            meteor.removeAllActions()
+        }
+        self.enumerateChildNodes(withName: "NaveEstrelar" ){
+            estrelar, stop in
+            estrelar.removeAllActions()
+        }
+        
+        
+        let changeSceneAction = SKAction.run(changeScene)
+        let waitToChangeScene = SKAction.wait(forDuration: 1)
+        let changeSceneSeguence = SKAction.sequence([waitToChangeScene, changeSceneAction])
+        self.run(changeSceneAction)
+        
+        
+    }
+    
+    
+    func changeScene(){
+        
+        let sceneToMove = GameOverScene(size: self.size)
+        sceneToMove.scaleMode = self.scaleMode
+        let myTransition = SKTransition.fade(withDuration: 0.5)
+        self.view!.presentScene(sceneToMove, transition: myTransition)
+        
     }
     
     
@@ -261,10 +359,22 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         
         
-        if gameScore >= 10 && gameScore <= 25 {
+        if gameScore >= 10 && gameScore <= 17 {
             meteorObject()
         }
-        if gameScore >= 25 && gameScore <= 45 {
+        if gameScore >= 25 && gameScore <= 35 {
+            spawnNaveEstrela()
+        }
+        
+        if gameScore >= 50 && gameScore <= 56 {
+            meteorObject()
+        }
+        
+        if gameScore >= 80 && gameScore <= 85 {
+            meteorObject()
+        }
+        
+        if gameScore >= 90 && gameScore <= 95 {
             spawnNaveEstrela()
         }
 
@@ -290,6 +400,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                     
                     if body1.node != nil{
                         spawnExplosion(spawnPosition: body1.node!.position, how: "player")
+                        
+                        
+                        
                     }
                    
                     
@@ -334,6 +447,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let fadeOut = SKAction.fadeOut(withDuration: 0.1)
         let delete = SKAction.removeFromParent()
         let loseALifeAction = SKAction.run(loseALife)
+       
         
         if how == "player"{
             let explosioSeguence = SKAction.sequence([explosionSound, scaleIn,fadeOut, delete,loseALifeAction])
@@ -353,6 +467,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func fireBullet(){
         let bullet = SKSpriteNode(imageNamed: "bullet")
         bullet.setScale(1)
+        bullet.name = "Bullet"
         bullet.position = player.position
         bullet.zPosition = 1
         bullet.physicsBody = SKPhysicsBody(rectangleOf: bullet.size)
@@ -366,7 +481,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let moveBullet = SKAction.moveTo(y: self.size.height + bullet.size.height, duration: 1)
         let deleteBullet = SKAction.removeFromParent()
         let bulletSequence = SKAction.sequence([bulletSound,moveBullet, deleteBullet])
-        bullet.run(bulletSequence)
+        
+        if currentGameState == gameState.inGame{
+            bullet.run(bulletSequence)
+        }
     
     }
     
@@ -374,6 +492,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func fireBulletEnemy(spawnPosition: CGPoint){
         let bullet = SKSpriteNode(imageNamed: "misselEnemy1")
         bullet.setScale(1)
+        bullet.name = "MisselEnemy1"
         bullet.position = spawnPosition
         bullet.zPosition = 2
         bullet.physicsBody = SKPhysicsBody(rectangleOf: bullet.size)
@@ -387,7 +506,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let moveBullet = SKAction.moveTo(y: self.size.height + bullet.size.height, duration: 1)
         let deleteBullet = SKAction.removeFromParent()
         let bulletSequence = SKAction.sequence([bulletSound,moveBullet, deleteBullet])
-        bullet.run(bulletSequence)
+        
+        if currentGameState == gameState.inGame{
+            bullet.run(bulletSequence)
+        }
+       
 
     }
 
@@ -409,6 +532,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let enemy = SKSpriteNode(imageNamed: "enemyShip")
         position = startPoint
         enemy.setScale(1)
+        enemy.name = "Enemy"
         enemy.position = startPoint
         enemy.zPosition = 2
         enemy.physicsBody = SKPhysicsBody(rectangleOf: enemy.size)
@@ -422,7 +546,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let deleteEnemy = SKAction.removeFromParent()
         let loseALifeAction = SKAction.run(loseALife)
         let enenySeguence = SKAction.sequence([moveEnenmy, deleteEnemy])
-        enemy.run(enenySeguence)
+        
+        if currentGameState == gameState.inGame{
+            enemy.run(enenySeguence)
+        }
+       
         
         let dx = endPoint.x - startPoint.x
         let dy = endPoint.y - startPoint.y
@@ -443,6 +571,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
       
         naveEstrelar.setScale(1)
+        naveEstrelar.name = "NaveEstrelar"
         naveEstrelar.position = startPoint
         naveEstrelar.zPosition = 2
         naveEstrelar.physicsBody = SKPhysicsBody(rectangleOf: naveEstrelar.size)
@@ -452,11 +581,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         naveEstrelar.physicsBody!.contactTestBitMask = PhysiscsCategories.Player | PhysiscsCategories.Bullet
         self.addChild(naveEstrelar)
         
-        let moveEnenmy = SKAction.move(to: endPoint, duration: 2.8)
+        let moveEnenmy = SKAction.move(to: endPoint, duration: 3.8)
         let deleteEnemy = SKAction.removeFromParent()
         let loseALifeAction = SKAction.run(loseALife)
-        let enenySeguence = SKAction.sequence([moveEnenmy, deleteEnemy, loseALifeAction])
-        naveEstrelar.run(enenySeguence)
+        let enenySeguence = SKAction.sequence([moveEnenmy, deleteEnemy])
+        
+        if currentGameState == gameState.inGame{
+            naveEstrelar.run(enenySeguence)
+        }
         
         let dx = endPoint.x - startPoint.x
         let dy = endPoint.y - startPoint.y
@@ -489,6 +621,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         meteorSpriteNode.setScale(1)
         meteorSpriteNode.position = startPoint
+        meteorSpriteNode.name = "Meteor"
         meteorSpriteNode.zPosition = 2
         meteorSpriteNode.physicsBody = SKPhysicsBody(rectangleOf: meteorSpriteNode.size)
         meteorSpriteNode.physicsBody!.affectedByGravity = false
@@ -515,8 +648,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let amountToRoutate = atan2(dy, dx)
         meteorSpriteNode.zRotation = amountToRoutate
         
-        meteorSpriteNode.run(SKAction.repeatForever(SKAction.animate(with: meteorFrames, timePerFrame: 0.1)))
         
+      
+        if currentGameState == gameState.inGame{
+            meteorSpriteNode.run(SKAction.repeatForever(SKAction.animate(with: meteorFrames, timePerFrame: 0.1)))
+        }
         
     }
     
@@ -530,7 +666,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         
-        if (lifesNumber != 0){
+        if currentGameState == gameState.preGame{
+            startGame()
+        }
+        
+       else if currentGameState == gameState.inGame{
             fireBullet()
         }
         
@@ -556,8 +696,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let amountDragged = pointOfTouch.x - previousPointOfTouch.x
             let amountDraggedUpDown = pointOfTouch.y - previousPointOfTouch.y
             
-            player.position.x += amountDragged
-            player.position.y += amountDraggedUpDown
+            
+            if currentGameState == gameState.inGame{
+                player.position.x += amountDragged
+                player.position.y += amountDraggedUpDown
+            }
+           
             
             if player.position.x > CGRectGetMaxX(gameArea) - player.size.width/2{
                 player.position.x = CGRectGetMaxX(gameArea) - player.size.width/2
