@@ -16,6 +16,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var  scoreLabel = SKLabelNode(fontNamed: "THEBOLDFONT")
     var  gameOverLabel = SKLabelNode(fontNamed: "THEBOLDFONT")
     var levelGame = 0
+    var loseLife = false
     var enemyPosition: CGPoint = CGPoint(x: 0, y:  1.3)
     var lifesNumber = 3
     let lifesLabel = SKLabelNode(fontNamed:"THEBOLDFONT")
@@ -24,7 +25,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var levelDuration = TimeInterval()
     //let enemy = SKSpriteNode(imageNamed: "enemyShip")
     let explosionSound = SKAction.playSoundFileNamed("explosionSound.mp3", waitForCompletion: false)
-    let SoundSpace = SKAction.playSoundFileNamed("soundSpace.mp3", waitForCompletion: false)
+   // let SoundSpace = SKAction.playSoundFileNamed("soundSpace.mp3", waitForCompletion: false)
     var gameArea: CGRect
     var meteorFrames = [SKTexture]()
     var background  = SKSpriteNode(imageNamed: "background")
@@ -35,15 +36,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     struct PhysiscsCategories{
         static let Nome: UInt32 = 0
-        static let Predios1: UInt32 = 0b1
-        static let Predios2: UInt32 = 0b1
-        static let Predios3: UInt32 = 0b1
+        static let Predios1: UInt32 = 0b11//3
+        static let Predios2: UInt32 = 0b101//5
+        static let Predios3: UInt32 = 0b110//6
         static let Player: UInt32 = 0b1 //1
         static let Bullet: UInt32 = 0b10 //2
         static let BulletEnemy: UInt32 = 0b100 //4
-        static let Emeny : UInt32 = 0b100 //4
-        static let Meteor : UInt32 = 0b100//4
-        static let NaveEstrelar : UInt32 = 0b100//4
+        static let Emeny : UInt32 = 0b111 //7
+        static let Meteor : UInt32 = 0b111//7
+        static let NaveEstrelar : UInt32 = 0b111//7
         
     }
     
@@ -138,7 +139,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         predios2.physicsBody!.affectedByGravity = false
         predios2.physicsBody!.categoryBitMask = PhysiscsCategories.Predios2
         predios2.physicsBody!.collisionBitMask = PhysiscsCategories.Nome
-        //predios.physicsBody!.contactTestBitMask = PhysiscsCategories.Emeny
+       // predios2.physicsBody!.contactTestBitMask = PhysiscsCategories.Emeny
         self.addChild(predios2)
         
         predios1.setScale(1)
@@ -148,7 +149,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         predios1.physicsBody!.affectedByGravity = false
         predios1.physicsBody!.categoryBitMask = PhysiscsCategories.Predios1
         predios1.physicsBody!.collisionBitMask = PhysiscsCategories.Nome
-        //predios.physicsBody!.contactTestBitMask = PhysiscsCategories.Emeny
+       // predios1.physicsBody!.contactTestBitMask = PhysiscsCategories.Emeny
         self.addChild(predios1)
         
         
@@ -159,7 +160,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         predios3.physicsBody!.affectedByGravity = false
         predios3.physicsBody!.categoryBitMask = PhysiscsCategories.Predios3
         predios3.physicsBody!.collisionBitMask = PhysiscsCategories.Nome
-        //predios.physicsBody!.contactTestBitMask = PhysiscsCategories.Emeny
+       // predios3.physicsBody!.contactTestBitMask = PhysiscsCategories.Emeny
         self.addChild(predios3)
         
         
@@ -260,7 +261,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let spawn = SKAction.run(spawnEnemy)
         let meteor = SKAction.run(meteorObject)
         let waitToSpawn = SKAction.wait(forDuration: levelDuration)
-        var spawnSequence = SKAction.sequence([SoundSpace,waitToSpawn, spawn])
+        var spawnSequence = SKAction.sequence([waitToSpawn, spawn])
         var spawnForever = SKAction.repeatForever(spawnSequence)
         
         if currentGameState == gameState.inGame{
@@ -395,6 +396,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                     body2 = contact.bodyA
                 }
         
+        
+        
+        print("Categoria  => \(body1.categoryBitMask)")
+        
+        
+        // Player
                 if body1.categoryBitMask == PhysiscsCategories.Player && body2.categoryBitMask == PhysiscsCategories.Emeny{
                     //if player has hit the enemy
                     
@@ -412,8 +419,76 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                     
                     
                 }
-        if body1.categoryBitMask == PhysiscsCategories.Bullet && body2.categoryBitMask == PhysiscsCategories.Emeny && (body2.node?.position.y)! < self.size.height{
+        
+        // Prédios 1
+        
+        if body1.categoryBitMask == PhysiscsCategories.Predios1 && body2.categoryBitMask == PhysiscsCategories.Emeny{
+            //if player has hit the enemy
+           
             
+            if body1.node != nil{
+                spawnExplosion(spawnPosition: body1.node!.position, how: "predio1")
+                
+                
+                
+            }
+           
+            
+        
+            body1.node?.removeFromParent()
+            body2.node?.removeFromParent()
+            
+            
+        }
+        
+        //Prédios 2
+        
+        if body1.categoryBitMask == PhysiscsCategories.Predios2 && body2.categoryBitMask == PhysiscsCategories.Emeny{
+            //if player has hit the enemy
+            
+            if body1.node != nil{
+                spawnExplosion(spawnPosition: body1.node!.position, how: "predio2")
+                
+                
+                
+            }
+           
+            
+        
+            body1.node?.removeFromParent()
+            body2.node?.removeFromParent()
+            
+            
+        }
+        
+        //Predios 3
+        
+        if body1.categoryBitMask == PhysiscsCategories.Predios3 && body2.categoryBitMask == PhysiscsCategories.Emeny{
+            //if player has hit the enemy
+            
+            
+            if body1.node != nil{
+                spawnExplosion(spawnPosition: body1.node!.position, how: "predio3")
+                
+                
+                
+            }
+           
+            
+        
+            body1.node?.removeFromParent()
+            body2.node?.removeFromParent()
+            
+            
+        }
+        
+        
+        
+        
+        
+        
+        if body1.categoryBitMask == PhysiscsCategories.Bullet && body2.categoryBitMask == PhysiscsCategories.Emeny {
+            //&& (body2.node?.position.y)! < self.size.height
             
                     //if bullet has hit the enemy
             
@@ -452,7 +527,25 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if how == "player"{
             let explosioSeguence = SKAction.sequence([explosionSound, scaleIn,fadeOut, delete,loseALifeAction])
             explosion.run(explosioSeguence)
+            loseLife = true
         }
+        else if how == "predio1"{
+            let explosioSeguence = SKAction.sequence([explosionSound, scaleIn,fadeOut, delete,loseALifeAction])
+            explosion.run(explosioSeguence)
+            
+        }
+        else if how == "predio2"{
+            let explosioSeguence = SKAction.sequence([explosionSound, scaleIn,fadeOut, delete,loseALifeAction])
+            explosion.run(explosioSeguence)
+            
+        }
+        else if how == "predio3"{
+            let explosioSeguence = SKAction.sequence([explosionSound, scaleIn,fadeOut, delete,loseALifeAction])
+            explosion.run(explosioSeguence)
+            
+        }
+    
+        
         else{
             let explosioSeguence = SKAction.sequence([explosionSound, scaleIn,fadeOut, delete])
             explosion.run(explosioSeguence)
@@ -671,7 +764,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         
        else if currentGameState == gameState.inGame{
-            fireBullet()
+           if !loseLife{
+               fireBullet()
+           }
+           
         }
         
         

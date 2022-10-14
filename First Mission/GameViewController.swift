@@ -8,16 +8,33 @@
 import UIKit
 import SpriteKit
 import GameplayKit
+import AVFoundation
 
 class GameViewController: UIViewController {
+    
+    var soundTema = AVAudioPlayer()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let filePath = Bundle.main.path(forResource: "soundSpace", ofType: "mp3")
+        let audioNSURL = NSURL(fileURLWithPath: filePath!)
+        
+        do {
+            soundTema = try AVAudioPlayer(contentsOf: audioNSURL as URL)
+        }catch{
+            return print("Cannot Find The Audio")
+        }
+        
+        soundTema.numberOfLoops = -1
+        soundTema.play()
+        
+        
+        
         if let view = self.view as! SKView? {
             // Load the SKScene from 'GameScene.sks'
            
-            let scene = GameScene(size: CGSize(width: 1536, height: 2048))
+            let scene = MainManuScene(size: CGSize(width: 1536, height: 2048))
             
                 // Set the scale mode to scale to fit the window
                 scene.scaleMode = .aspectFill
@@ -28,8 +45,8 @@ class GameViewController: UIViewController {
             
             view.ignoresSiblingOrder = true
             
-            view.showsFPS = true
-            view.showsNodeCount = true
+            view.showsFPS = false
+            view.showsNodeCount = false
         }
     }
 
